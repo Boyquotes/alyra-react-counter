@@ -1,14 +1,18 @@
 import { BN, Idl, Program } from "@coral-xyz/anchor";
 import { AnchorWallet, WalletContextState } from "@solana/wallet-adapter-react";
-import { AddressLookupTableAccount, Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { AddressLookupTableAccount, Connection, LAMPORTS_PER_SOL, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
 import { sign } from 'tweetnacl';
 import { IDL, PROGRAM_ID } from "../idl/idl";
+import { IDLCounter, PROGRAM_ID_COUNTER } from "../idl/idlCounter";
 import { getQuote } from "./jupiter.helper";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 const connection = new Connection(process.env.REACT_APP_RPC_URL!, "confirmed");
 const program = new Program<Idl>(IDL as Idl, PROGRAM_ID, {
     connection,
+});
+const programCounter = new Program<Idl>(IDLCounter as Idl, PROGRAM_ID_COUNTER, {
+  connection,
 });
 
 export async function getSolanaBalance(publicKey: string): Promise<number> {
@@ -110,6 +114,25 @@ export const initializeAccount = async (anchorWallet: AnchorWallet, data: number
     }
 };
 
+export const initializeCounter = async (anchorWallet: AnchorWallet): Promise<string | null> => {
+    try {
+      const accountTransaction = await getInitializeCounterTransaction(anchorWallet.publicKey);
+      // const accountTransaction = await getInitializeAccountTransactionWWithoutAnchor(anchorWallet.publicKey, new BN(data), new BN(age));
+  
+      const recentBlockhash = await getRecentBlockhash();
+      if (accountTransaction && recentBlockhash) {
+          accountTransaction.feePayer = anchorWallet.publicKey;
+          accountTransaction.recentBlockhash = recentBlockhash;
+          const signedTransaction = await anchorWallet.signTransaction(accountTransaction);
+          return await connection.sendRawTransaction(signedTransaction.serialize());
+      }
+      return null;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+};
+
 export const getAccount = async (publicKey: PublicKey): Promise<any> => {
     try {
       const accountSeed = Buffer.from("account");
@@ -121,6 +144,23 @@ export const getAccount = async (publicKey: PublicKey): Promise<any> => {
         new PublicKey(PROGRAM_ID.toString())
       );
       return await program.account.newAccount.fetch(accountPda);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+};
+
+export const getCounter = async (publicKey: PublicKey): Promise<any> => {
+    try {
+      const counterSeed = Buffer.from("counter");
+      const [counterPda] = PublicKey.findProgramAddressSync(
+        [
+          counterSeed, 
+            publicKey.toBuffer()
+        ], 
+        new PublicKey(PROGRAM_ID.toString())
+      );
+      return await program.account.counter.fetch(counterPda);
     } catch (error) {
       console.error(error);
       return null;
@@ -141,6 +181,37 @@ export const getInitializeAccountTransaction = async (publicKey: PublicKey, data
         .accounts({
             newAccount: accountPda,
             signer: publicKey,
+            systemProgram: SystemProgram.programId
+        })
+        .transaction()
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+};
+
+export const getInitializeCounterTransaction = async (publicKey: PublicKey): Promise<Transaction | null> => {
+    try {
+      const newKeypair = new Keypair();
+
+      const counterSeed = Buffer.from("counter");
+      const [counterPda] = PublicKey.findProgramAddressSync(
+        [
+          counterSeed
+        ], 
+        new PublicKey(PROGRAM_ID_COUNTER.toString())
+      );
+      console.log(publicKey.toString());
+      console.log(PROGRAM_ID_COUNTER.toString());
+      console.log(PROGRAM_ID_COUNTER.toBuffer());
+      console.log(counterPda.toString());
+      console.log(newKeypair.publicKey.toString());
+      console.log(newKeypair.secretKey.toString());
+      return await programCounter.methods.initialize()
+        .accounts({
+            counter: counterPda,
+            // user: newKeypair.publicKey,
+            user: publicKey,
             systemProgram: SystemProgram.programId
         })
         .transaction()

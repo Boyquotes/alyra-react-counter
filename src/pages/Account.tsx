@@ -1,5 +1,6 @@
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { getAccount, initializeAccount } from "../helpers/solana.helper";
+import { getCounter, initializeCounter } from "../helpers/solana.helper";
 import { useState } from "react";
 
 export function Account() {
@@ -64,6 +65,18 @@ export function Account() {
                             }}
                         >
                             Create Account
+                        </button>
+                        <button
+                            onClick={async () => {
+                                if (anchorWallet.publicKey) {
+                                    setSendingTransaction(true);
+                                    const initResult = await initializeCounter(anchorWallet);
+                                    setTransactionHash(initResult);
+                                    setSendingTransaction(false);
+                                }
+                            }}
+                        >
+                            Create Counter
                         </button>
                     </div>
                 )

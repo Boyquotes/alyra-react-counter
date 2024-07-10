@@ -27,7 +27,7 @@ function App() {
             solanaBalance !== null && 
             (
               <div>
-                <p>Balance: {solanaBalance} SOL</p>
+                <p>Balances: {solanaBalance} SOL</p>
               </div>
             )
           }
