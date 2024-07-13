@@ -7,6 +7,7 @@ export function Account() {
 
     const anchorWallet = useAnchorWallet();
     const [transactionHash, setTransactionHash] = useState<string | null>(null);
+    const [transactionError, setTransactionError] = useState<boolean>(false);
     const [sendingTransaction, setSendingTransaction] = useState<boolean>(false);
     const [account, setAccount] = useState<any | null | undefined>(undefined);
     const [data, setData] = useState<number>(0);
@@ -61,6 +62,8 @@ export function Account() {
                                     const initResult = await initializeAccount(anchorWallet, 100, 20);
                                     setTransactionHash(initResult);
                                     setSendingTransaction(false);
+                                    console.log("initResult");
+                                    console.log(initResult);
                                 }
                             }}
                         >
@@ -73,10 +76,16 @@ export function Account() {
                                     const initResult = await initializeCounter(anchorWallet);
                                     setTransactionHash(initResult);
                                     setSendingTransaction(false);
+                                    console.log("initResult");
+                                    console.log(initResult);
+                                    if(!initResult){
+                                        console.log("setError");
+                                        setTransactionError(true);
+                                    }
                                 }
                             }}
                         >
-                            Create Counter
+                            Create Counter only one
                         </button>
                     </div>
                 )
@@ -99,6 +108,13 @@ export function Account() {
                 transactionHash && !sendingTransaction && (
                     <p>
                         Transaction hash: <b>{transactionHash}</b>
+                    </p>
+                )
+            }
+            {
+                transactionError && !sendingTransaction && (
+                    <p>
+                        Transaction Error
                     </p>
                 )
             }
