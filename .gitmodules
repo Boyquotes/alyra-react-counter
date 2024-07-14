@@ -1,0 +1,3 @@
+[submodule "programs/hand_click"]
+	path = programs/hand_click
+	url = https://github.com/AutonomousTradingOrganization/hand_click
